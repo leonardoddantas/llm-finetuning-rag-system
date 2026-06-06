@@ -6,16 +6,10 @@ __pycache__/
 *.pyo
 *.pyd
 
-.ipynb_checkpoints/
-
 .vscode/
 
 .DS_Store
 Thumbs.db
-
-lora_models/
-models/
-trained_models/
 
 .cache/
 huggingface/
@@ -24,6 +18,5 @@ huggingface/
 
 tmp/
 temp/
-reports/*.pdf
 
 .env
