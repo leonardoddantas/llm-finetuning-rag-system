@@ -26,7 +26,7 @@ def extract_text_from_file(file_path):
     else:
         raise ValueError("Formato não suportado. Use .pdf ou .txt")
 
-def split_text(text, max_chunk_length=1500):
+def split_text(text, max_chunk_length=1000):
     """
     Divide o texto em chunks com base em quebras de linha.
     Cada chunk terá no máximo max_chunk_length caracteres.
@@ -54,22 +54,32 @@ def generate_instruction_response(chunk, hf_pipeline):
     e uma resposta direta (ambas com menos de 10 palavras).
     """
     prompt = f"""
-        You are a data generator for fine-tuning a language model.
+        Você é um gerador de datasets para fine-tuning de modelos de linguagem.
 
-        Given the content below:
-
-        1. Create one objective and informative question.
-        2. Create one concise answer.
-        3. Use only information explicitly present in the content.
-        4. Do not use external knowledge.
-        5. Generate both question and answer in the same language as the content.
-        6. Question: maximum 20 words.
-        7. Answer: maximum 30 words.
-
-        Use exactly the format:
-
-        INSTRUCTION: <question>
-        RESPONSE: <answer>
+        Com base exclusivamente no conteúdo fornecido:
+        
+        1. Gere uma pergunta objetiva e informativa.
+        2. Gere uma resposta curta e precisa.
+        3. Utilize apenas informações presentes no texto.
+        4. Não utilize conhecimento externo.
+        5. Gere a pergunta e a resposta no mesmo idioma do conteúdo.
+        6. Priorize conceitos, definições, processos e explicações.
+        7. Não gere perguntas sobre:
+           - título do livro
+           - nome do autor
+           - capítulos
+           - sumário
+           - ISBN
+           - informações editoriais
+        
+        Limites:
+        - Pergunta: máximo de 20 palavras.
+        - Resposta: máximo de 30 palavras.
+        
+        Use exatamente o formato:
+        
+        INSTRUCTION: <pergunta>
+        RESPONSE: <resposta>
 
         Content:
         \"\"\"
