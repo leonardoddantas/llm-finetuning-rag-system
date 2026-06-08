@@ -26,7 +26,7 @@ def extract_text_from_file(file_path):
     else:
         raise ValueError("Formato não suportado. Use .pdf ou .txt")
 
-def split_text(text, max_chunk_length=500):
+def split_text(text, max_chunk_length=800):
     """
     Divide o texto em chunks com base em quebras de linha.
     Cada chunk terá no máximo max_chunk_length caracteres.
