@@ -2,30 +2,11 @@
 venv/
 .vscode/
 .env
-# Checkpoints do otimizador — grandes demais para o GitHub (75 MB cada)
-optimizer.pt
-# Pesos completos do modelo base (não necessários — carregue do HuggingFace)
-*.bin
-*.safetensors
-# Checkpoints de treinamento (grandes demais)
-**/checkpoint-*/
-**/optimizer.pt
-**/scheduler.pt
 
-# Pesos do modelo base (baixar do HuggingFace quando necessário)
-*.bin
-*.safetensors
 
-# Tokenizadores salvos localmente (recarregar do MODEL_BASE)
-**/tokenizer.json
-**/tokenizer.model
 
-# Arquivos do sistema
-__pycache__/
-.ipynb_checkpoints/
-*.pyc
-.env
 
-lora_models/causal_model_1
-lora_models/causal_model_2
-lora_models/seq2seq_model_1
+
+
+
+
