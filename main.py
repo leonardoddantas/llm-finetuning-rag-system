@@ -92,47 +92,19 @@ MODELS: dict = {}
 # =============================================================================
 # CARREGAMENTO DOS MODELOS
 # =============================================================================
-def carregar_phi4() -> dict:
-    """
-    Carrega o modelo fine-tunado com LoRA (Low-Rank Adaptation).
+def carregar_phi4_base():
 
-    LoRA é uma técnica de fine-tuning eficiente que adiciona pequenas matrizes
-    de adaptação aos pesos originais do modelo, sem modificá-los diretamente.
-    Resultado: modelo especializado, muito menor que um fine-tune completo.
+    tokenizer = AutoTokenizer.from_pretrained(
+        "microsoft/Phi-4-mini-instruct"
+    )
 
-    Caminhos locais esperados:
-      - ./lora_finetuned_model/   → adaptadores LoRA + config do modelo
-      - ./distilgpt2_tokenizer/   → tokenizador salvo localmente
-
-    Se os arquivos locais não existirem, faz fallback para o modelo base.
-    """
-    model_path = "./lora_models/causal_model_1/final_adapter"
-    tokenizer_path = "./lora_models/causal_model_1/final_tokenizer"
-
-    # Verifica se os arquivos do modelo fine-tunado existem localmente
-    if not os.path.exists(model_path):
-        logger.warning(
-            f"Diretório '{model_path}' não encontrado. "
-            "Usando modelo base como fallback para o 'fine-tunado'."
-        )
-        # Fallback: usa o modelo base para não quebrar a aplicação
-        return carregar_modelo_base()
-
-    logger.info(f"Carregando modelo FINE-TUNADO (LoRA) de '{model_path}'...")
-
-    # Carrega o tokenizador do caminho local
-    # Se o tokenizador local não existir, tenta o caminho do modelo
-    tok_path = tokenizer_path if os.path.exists(tokenizer_path) else model_path
-    tokenizer = AutoTokenizer.from_pretrained(tok_path)
-
-    # Mesma garantia do pad_token para o modelo fine-tunado
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-        logger.info("  → pad_token definido como eos_token (fine-tunado)")
 
-    # Carrega o modelo com os adaptadores LoRA.
-    # O from_pretrained é inteligente: se detectar configs LoRA, carrega corretamente.
-    model = AutoModelForCausalLM.from_pretrained(model_path)
+    model = AutoModelForCausalLM.from_pretrained(
+        "microsoft/Phi-4-mini-instruct"
+    )
+
     model.eval()
 
     pipe = pipeline(
@@ -142,29 +114,26 @@ def carregar_phi4() -> dict:
         device=-1
     )
 
-    logger.info("  ✓ Modelo FINE-TUNADO carregado com sucesso!")
-    return {"model": model, "tokenizer": tokenizer, "pipeline": pipe}
+    return {
+        "model": model,
+        "tokenizer": tokenizer,
+        "pipeline": pipe,
+        "tipo": "causal"
+    }
 
-def carregar_phi44():
-    
-    model_path = "/lora_models/causal_model_1/final_adapter"
-    tokenizer_path = "/lora_models/causal_model_1/final_tokenizer"
+def carregar_phi4_lora():
 
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+    model_path = "./lora_models/causal_model_1/final_adapter"
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        "./lora_models/causal_model_1/final_tokenizer"
+    )
 
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16
-    )
 
     base_model = AutoModelForCausalLM.from_pretrained(
-        "microsoft/Phi-4-mini-instruct",
-        quantization_config=bnb_config,
-        device_map="auto"
+        "microsoft/Phi-4-mini-instruct"
     )
 
     model = PeftModel.from_pretrained(
@@ -177,7 +146,8 @@ def carregar_phi44():
     pipe = pipeline(
         "text-generation",
         model=model,
-        tokenizer=tokenizer
+        tokenizer=tokenizer,
+        device=-1
     )
 
     return {
@@ -187,44 +157,38 @@ def carregar_phi44():
         "tipo": "causal"
     }
 
-def carregar_llama():
-    
-    model_path = "./lora_models/causal_model_2/final_adapter"
-    tokenizer_path = "./lora_models/causal_model_2/final_tokenizer"
-
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-
-    base_model = AutoModelForCausalLM.from_pretrained(
-        "meta-llama/Llama-3.2-3B-Instruct",
-        device_map="auto"
-    )
-
-    model = PeftModel.from_pretrained(
-        base_model,
-        model_path
-    )
-
-    model.eval()
-
-    pipe = pipeline(
-        "text-generation",
-        model=model,
-        tokenizer=tokenizer
-    )
-
-    return {
-        "model": model,
-        "tokenizer": tokenizer,
-        "pipeline": pipe,
-        "tipo": "causal"
-    }
-
-def carregar_flant5xl():
-
-    model_path = "./lora_models/seq2seq_model_1/final_adapter"
+def carregar_flant5xl_base():
 
     tokenizer = AutoTokenizer.from_pretrained(
-        "./lora_models/seq2seq_model_1/final_tokenizer"
+        "google/flan-t5-xl"
+    )
+
+    model = AutoModelForSeq2SeqLM.from_pretrained(
+        "google/flan-t5-xl"
+    )
+
+    model.eval()
+
+    pipe = pipeline(
+        "text2text-generation",
+        model=model,
+        tokenizer=tokenizer
+    )
+
+    return {
+        "model": model,
+        "tokenizer": tokenizer,
+        "pipeline": pipe,
+        "tipo": "seq2seq"
+    }
+
+def carregar_flant5xl_lora():
+
+    model_path = "./lora_models/seq2seq_model_1/final_adapter"
+    tokenizer_path = "./lora_models/seq2seq_model_1/final_tokenizer"
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_path
     )
 
     base_model = AutoModelForSeq2SeqLM.from_pretrained(
@@ -235,6 +199,7 @@ def carregar_flant5xl():
         base_model,
         model_path
     )
+
     model.eval()
 
     pipe = pipeline(
@@ -250,12 +215,38 @@ def carregar_flant5xl():
         "tipo": "seq2seq"
     }
 
-def carregar_lamini():
-
-    model_path = "./lora_models/seq2seq_model_2/final_adapter"
+def carregar_lamini_base():
 
     tokenizer = AutoTokenizer.from_pretrained(
-        "./lora_models/seq2seq_model_2/final_tokenizer"
+        "MBZUAI/LaMini-Flan-T5-783M"
+    )
+
+    model = AutoModelForSeq2SeqLM.from_pretrained(
+        "MBZUAI/LaMini-Flan-T5-783M"
+    )
+
+    model.eval()
+
+    pipe = pipeline(
+        "text2text-generation",
+        model=model,
+        tokenizer=tokenizer
+    )
+
+    return {
+        "model": model,
+        "tokenizer": tokenizer,
+        "pipeline": pipe,
+        "tipo": "seq2seq"
+    }
+
+def carregar_lamini_lora():
+
+    model_path = "./lora_models/seq2seq_model_2/final_adapter"
+    tokenizer_path = "./lora_models/seq2seq_model_2/final_tokenizer"
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_path
     )
 
     base_model = AutoModelForSeq2SeqLM.from_pretrained(
@@ -266,6 +257,7 @@ def carregar_lamini():
         base_model,
         model_path
     )
+
     model.eval()
 
     pipe = pipeline(
@@ -280,6 +272,73 @@ def carregar_lamini():
         "pipeline": pipe,
         "tipo": "seq2seq"
     }
+
+def carregar_llama_base():
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        "meta-llama/Llama-3.2-3B-Instruct"
+    )
+
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        "meta-llama/Llama-3.2-3B-Instruct"
+    )
+
+    model.eval()
+
+    pipe = pipeline(
+        "text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        device=-1
+    )
+
+    return {
+        "model": model,
+        "tokenizer": tokenizer,
+        "pipeline": pipe,
+        "tipo": "causal"
+    }
+
+def carregar_llama_lora():
+
+    model_path = "./lora_models/causal_model_2/final_adapter"
+    tokenizer_path = "./lora_models/causal_model_2/final_tokenizer"
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_path
+    )
+
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    base_model = AutoModelForCausalLM.from_pretrained(
+        "meta-llama/Llama-3.2-3B-Instruct"
+    )
+
+    model = PeftModel.from_pretrained(
+        base_model,
+        model_path
+    )
+
+    model.eval()
+
+    pipe = pipeline(
+        "text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        device=-1
+    )
+
+    return {
+        "model": model,
+        "tokenizer": tokenizer,
+        "pipeline": pipe,
+        "tipo": "causal"
+    }
+
 
 
 # =============================================================================
@@ -299,7 +358,17 @@ async def startup_event():
     logger.info("  INICIANDO SERVIDOR - Carregando modelos de linguagem...")
     logger.info("=" * 60)
 
-    MODELS["phi4"] = carregar_phi4()
+    MODELS["phi4-base"] = carregar_phi4_base()
+    MODELS["phi4-lora"] = carregar_phi4_lora()
+
+    MODELS["llama32-base"] = carregar_llama_base()
+    MODELS["llama32-lora"] = carregar_llama_lora()
+
+    MODELS["flant5xl-base"] = carregar_flant5xl_base()
+    MODELS["flant5xl-lora"] = carregar_flant5xl_lora()
+
+    MODELS["lamini-base"] = carregar_lamini_base()
+    MODELS["lamini-lora"] = carregar_lamini_lora()
 
     
 
@@ -364,31 +433,56 @@ async def listar_modelos():
         ]
     }
     """
-    modelos_info = {
-        "phi4": {
-            "id": "phi4",
-            "nome": "Phi-4 Mini Instruct",
-            "descricao": "Modelo causal ajustado com LoRA."
-        },
+   modelos_info = {
 
-        "llama32": {
-            "id": "llama32",
-            "nome": "Llama 3.2 3B",
-            "descricao": "Modelo causal ajustado com LoRA."
-        },
+    "phi4-base": {
+        "id": "phi4-base",
+        "nome": "Phi-4 Mini Instruct (Base)",
+        "descricao": "Modelo causal original sem fine-tuning."
+    },
 
-        "flant5xl": {
-            "id": "flant5xl",
-            "nome": "Flan-T5-XL",
-            "descricao": "Modelo Seq2Seq ajustado com LoRA."
-        },
+    "phi4-lora": {
+        "id": "phi4-lora",
+        "nome": "Phi-4 Mini Instruct (LoRA)",
+        "descricao": "Modelo causal ajustado com LoRA."
+    },
 
-        "lamini": {
-            "id": "lamini",
-            "nome": "LaMini-Flan-T5",
-            "descricao": "Modelo Seq2Seq ajustado com LoRA."
-        }
+    "llama-base": {
+        "id": "llama-base",
+        "nome": "Llama 3.2 3B (Base)",
+        "descricao": "Modelo causal original sem fine-tuning."
+    },
+
+    "llama-lora": {
+        "id": "llama-lora",
+        "nome": "Llama 3.2 3B (LoRA)",
+        "descricao": "Modelo causal ajustado com LoRA."
+    },
+
+    "flant5xl-base": {
+        "id": "flant5xl-base",
+        "nome": "Flan-T5-XL (Base)",
+        "descricao": "Modelo Seq2Seq original sem fine-tuning."
+    },
+
+    "flant5xl-lora": {
+        "id": "flant5xl-lora",
+        "nome": "Flan-T5-XL (LoRA)",
+        "descricao": "Modelo Seq2Seq ajustado com LoRA."
+    },
+
+    "lamini-base": {
+        "id": "lamini-base",
+        "nome": "LaMini-Flan-T5 (Base)",
+        "descricao": "Modelo Seq2Seq original sem fine-tuning."
+    },
+
+    "lamini-lora": {
+        "id": "lamini-lora",
+        "nome": "LaMini-Flan-T5 (LoRA)",
+        "descricao": "Modelo Seq2Seq ajustado com LoRA."
     }
+}
 
     # Filtra apenas os modelos que foram carregados com sucesso
     disponiveis = [
