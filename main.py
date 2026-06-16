@@ -433,56 +433,31 @@ async def listar_modelos():
         ]
     }
     """
-   modelos_info = {
+    modelos_info = {
+        "phi4": {
+            "id": "phi4",
+            "nome": "Phi-4 Mini Instruct",
+            "descricao": "Modelo causal ajustado com LoRA."
+        },
 
-    "phi4-base": {
-        "id": "phi4-base",
-        "nome": "Phi-4 Mini Instruct (Base)",
-        "descricao": "Modelo causal original sem fine-tuning."
-    },
+        "llama32": {
+            "id": "llama32",
+            "nome": "Llama 3.2 3B",
+            "descricao": "Modelo causal ajustado com LoRA."
+        },
 
-    "phi4-lora": {
-        "id": "phi4-lora",
-        "nome": "Phi-4 Mini Instruct (LoRA)",
-        "descricao": "Modelo causal ajustado com LoRA."
-    },
+        "flant5xl": {
+            "id": "flant5xl",
+            "nome": "Flan-T5-XL",
+            "descricao": "Modelo Seq2Seq ajustado com LoRA."
+        },
 
-    "llama-base": {
-        "id": "llama-base",
-        "nome": "Llama 3.2 3B (Base)",
-        "descricao": "Modelo causal original sem fine-tuning."
-    },
-
-    "llama-lora": {
-        "id": "llama-lora",
-        "nome": "Llama 3.2 3B (LoRA)",
-        "descricao": "Modelo causal ajustado com LoRA."
-    },
-
-    "flant5xl-base": {
-        "id": "flant5xl-base",
-        "nome": "Flan-T5-XL (Base)",
-        "descricao": "Modelo Seq2Seq original sem fine-tuning."
-    },
-
-    "flant5xl-lora": {
-        "id": "flant5xl-lora",
-        "nome": "Flan-T5-XL (LoRA)",
-        "descricao": "Modelo Seq2Seq ajustado com LoRA."
-    },
-
-    "lamini-base": {
-        "id": "lamini-base",
-        "nome": "LaMini-Flan-T5 (Base)",
-        "descricao": "Modelo Seq2Seq original sem fine-tuning."
-    },
-
-    "lamini-lora": {
-        "id": "lamini-lora",
-        "nome": "LaMini-Flan-T5 (LoRA)",
-        "descricao": "Modelo Seq2Seq ajustado com LoRA."
+        "lamini": {
+            "id": "lamini",
+            "nome": "LaMini-Flan-T5",
+            "descricao": "Modelo Seq2Seq ajustado com LoRA."
+        }
     }
-}
 
     # Filtra apenas os modelos que foram carregados com sucesso
     disponiveis = [
